@@ -1,52 +1,53 @@
 name: Compilar APK Android
 
 on:
-push:
-paths:
-- 'Minimalista-Launcher-Projeto.zip'
-- '.github/workflows/android.yml'
-workflow_dispatch:
+  push:
+    paths:
+      - 'Minimalista-Launcher-Projeto.zip'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
 
 permissions:
-contents: read
+  contents: read
 
 jobs:
-build:
-runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar arquivos
+        uses: actions/checkout@v4
 
-steps:
-  - name: Baixar arquivos
-    uses: actions/checkout@v4
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-  - name: Configurar Java
-    uses: actions/setup-java@v4
-    with:
-      distribution: temurin
-      java-version: '17'
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
-  - name: Configurar Gradle
-    uses: gradle/actions/setup-gradle@v4
-    with:
-      gradle-version: '8.9'
+      - name: Extrair projeto
+        run: unzip -q -o Minimalista-Launcher-Projeto.zip -d build-source
 
-  - name: Extrair projeto
-    run: unzip -q -o Minimalista-Launcher-Projeto.zip -d build-source
+      - name: Localizar projeto Gradle
+        shell: bash
+        run: |
+          FILE="$(find build-source -type f -name settings.gradle -print -quit)"
+          if [ -z "$FILE" ]; then
+            echo "ERRO: settings.gradle não encontrado dentro do ZIP."
+            exit 1
+          fi
+          echo "PROJECT_DIR=$(dirname "$FILE")" >> "$GITHUB_ENV"
 
-  - name: Localizar projeto Android
-    run: |
-      FILE=$(find build-source -type f -name settings.gradle -print -quit)
-      if [ -z "$FILE" ]; then
-        echo "ERRO: settings.gradle não encontrado no ZIP"
-        exit 1
-      fi
-      echo "PROJECT_DIR=$(dirname "$FILE")" >> "$GITHUB_ENV"
+      - name: Compilar APK
+        run: gradle -p "$PROJECT_DIR" assembleDebug
 
-  - name: Compilar APK
-    run: gradle -p "$PROJECT_DIR" assembleDebug
-
-  - name: Disponibilizar APK
-    uses: actions/upload-artifact@v4
-    with:
-      name: Minimalista-Launcher-APK
-      path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
-      if-no-files-found: error
+      - name: Disponibilizar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Minimalista-Launcher-APK
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          
