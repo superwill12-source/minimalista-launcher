@@ -29,10 +29,10 @@ jobs:
         run: unzip -q Minimalista-Launcher-Projeto.zip -d build-source
 
       - name: Compilar APK
-        run: gradle -p build-source/minimalista-launcher assembleDebug
+        run: gradle -p build-source/minimalista-v2 assembleDebug
 
       - uses: actions/upload-artifact@v4
         with:
           name: Minimalista-Launcher-APK
-          path: build-source/minimalista-launcher/app/build/outputs/apk/debug/app-debug.apk
+          path: build-source/minimalista-v2/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
